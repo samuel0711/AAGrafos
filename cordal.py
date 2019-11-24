@@ -1,51 +1,25 @@
 from collections import defaultdict
+import networkx as nx
 
-class Grafo():
-
-	def __init__(self, arestas):
-		self._grafo = defaultdict(set)
-		self.adicionaArestas(arestas)
-	#main functions
-	def vizinhos(self,v):
-		return self._grafo[v]
-
-	def getVertices(self):
-		return list(self._grafo.keys())
-
-	def getArestas(self):
-		return [(u,v) for k in self._grafo.keys() for v in self._grafo[k]]
-
-	#support functions
-	def adicionaArestas(self,arestas):
-		for u,v in arestas:
-			self._grafo[u].add(v)
-			self._grafo[v].add(u)
-
-	def existeAresta(self,u,v):
-		return u in self._grafo and v in self._grafo
-	
-	def verificarCiclos(self, vOrigem):
-		vVisitados = set()
-		vRestantes = [vOrigem]	#lista de vertices a percorrer
-
-		while vRestantes:#dfs
-			vAtual = vRestantes.pop()
-			vVisitados.add(vAtual)
-
-			for vizinho in self.vizinhos(vAtual):
-				if vizinho in vVisitados:
-					return True	#achou um vertice já visitado, ou seja, ciclo
-
-				vRestantes.append(vizinho)
-
-		return False
-
-
-edges = [('A','B'), ('B','C'), ('C','D'),('D','E'),('E','A')]
+grafos = nx.DiGraph()
+grafos.add_nodes_from(['A','B','C','D','E'])
+grafos.add_edges_from([('A','B'), ('B','C'), ('C','D'),('D','E'),('E','A')])
 #edges = [('A','B'), ('B','C'), ('C','D'),('D','E'),('E','A'), ('A','D')]
-grafo = Grafo(edges)
 
-if grafo.verificarCiclos('A'):
-	print('Encontrou um ciclo!\n', grafo._grafo)
-else:
-	print('Não encontrou um ciclo.')
+ciclos = list(nx.simple_cycles(grafos))
+ciclos.sort(key=len)
+cordaisCiclo = False
+for ciclo in ciclos:
+	if len(ciclo) == 3:
+		print("O ciclo ",ciclo,"tem tamanho 3, logo é um ciclo induzido. Não define cordalidade ao grafo.")
+	else:
+		for vertice in ciclo:
+			for v in grafos.nodes:
+				if(vertice != v and vertice not in grafos.neighbors(v) and v not in grafos.neighbors(vertice) and (grafos.has_edge(vertice,v) or grafos.has_edge(v,vertice))):
+					print("A aresta (",vertice,",",v,") não faz parte do ciclo, porém conecta dois vértices do ciclo ",ciclo,".")
+					cordaisCiclo = True
+					break
+			break
+		if cordaisCiclo == False:
+			print("O ciclo ",ciclo," não possui uma corda. Ou seja, o grafo não é cordal!")
+			break
